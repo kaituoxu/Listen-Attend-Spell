@@ -15,6 +15,7 @@ import torch
 import torch.utils.data as data
 
 import kaldi_io
+IGNORE_ID = -1
 
 
 class AudioDataset(data.Dataset):
@@ -95,7 +96,7 @@ def _collate_fn(batch):
     # perform padding and convert to tensor
     xs_pad = pad_list([torch.from_numpy(x).float() for x in xs], 0)
     ilens = torch.from_numpy(ilens)
-    ys_pad = pad_list([torch.from_numpy(y).float() for y in ys], 0)
+    ys_pad = pad_list([torch.from_numpy(y).float() for y in ys], IGNORE_ID)
     return xs_pad, ilens, ys_pad
 
 
