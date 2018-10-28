@@ -1,11 +1,7 @@
-# TODO: use unitest; remove sys.path...
-
 import json
-import sys
-sys.path.append("../src/data")
 
-from data import AudioDataset
-from data import AudioDataLoader
+from data.data import AudioDataset
+from data.data import AudioDataLoader
 
 
 if __name__ == "__main__":

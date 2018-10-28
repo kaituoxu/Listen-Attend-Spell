@@ -43,15 +43,3 @@ class DotProductAttention(nn.Module):
             concated.view(-1, 2*hidden_size))).view(batch_size, -1, hidden_size)
 
         return output, attention_distribution
-
-
-if __name__ == "__main__":
-    N, To, Ti, H = 3, 5, 4, 2
-    queries = torch.randn(N, To, H)
-    values = torch.randn(N, Ti, H)
-    attention = DotProductAttention(H)
-    output, attention_distribution = attention(queries, values)
-    print(output.size())
-    print(output)
-    print(attention_distribution.size())
-    print(attention_distribution)

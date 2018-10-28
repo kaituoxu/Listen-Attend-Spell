@@ -14,8 +14,8 @@ import numpy as np
 import torch
 import torch.utils.data as data
 
-import kaldi_io
-IGNORE_ID = -1
+import utils.kaldi_io as kaldi_io
+from utils.utils import IGNORE_ID, pad_list
 
 
 class AudioDataset(data.Dataset):
@@ -122,15 +122,3 @@ def load_inputs_and_targets(batch):
           for i in nonzero_sorted_idx]
 
     return xs, ys
-
-
-def pad_list(xs, pad_value):
-    # From: espnet/src/nets/e2e_asr_th.py: pad_list()
-    n_batch = len(xs)
-    max_len = max(x.size(0) for x in xs)
-    pad = xs[0].new(n_batch, max_len, * xs[0].size()[1:]).fill_(pad_value)
-
-    for i in range(n_batch):
-        pad[i, :xs[i].size(0)] = xs[i]
-
-    return pad
