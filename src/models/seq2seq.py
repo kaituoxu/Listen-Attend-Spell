@@ -18,6 +18,5 @@ class Seq2Seq(nn.Module):
             padded_targets: N x To
         """
         encoder_padded_outputs, _ = self.encoder(padded_input, input_lengths)
-        decoder_outputs, _ = self.decoder(
-            padded_target, encoder_padded_outputs)
-        return decoder_outputs
+        loss = self.decoder(padded_target, encoder_padded_outputs)
+        return loss

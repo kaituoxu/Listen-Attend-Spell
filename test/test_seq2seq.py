@@ -30,7 +30,8 @@ if __name__ == "__main__":
 
     # Seq2Seq
     seq2seq = Seq2Seq(encoder, decoder)
-    decoder_outputs = seq2seq(padded_input, input_lengths, padded_target)
-    print(decoder_outputs)
-    print("To+1 =", len(decoder_outputs))
-    print("N, V =", decoder_outputs[0].size())
+    loss = seq2seq(padded_input, input_lengths, padded_target)
+    print(loss)
+    # print(decoder_outputs)
+    # print("To+1 =", len(decoder_outputs))
+    # print("N, V =", decoder_outputs[0].size())

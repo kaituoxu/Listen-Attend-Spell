@@ -11,10 +11,10 @@ class DotProductAttention(nn.Module):
     NOTE: Here we use the terminology in Stanford cs224n-2018-lecture11.
     """
 
-    def __init__(self, dim):
+    def __init__(self):
         super(DotProductAttention, self).__init__()
         # TODO: move this out of this class?
-        self.linear_out = nn.Linear(dim*2, dim)
+        # self.linear_out = nn.Linear(dim*2, dim)
 
     def forward(self, queries, values):
         """
@@ -35,11 +35,11 @@ class DotProductAttention(nn.Module):
             attention_scores.view(-1, input_lengths), dim=1).view(batch_size, -1, input_lengths)
         # (N, To, Ti) * (N, Ti, H) -> (N, To, H)
         attention_output = torch.bmm(attention_distribution, values)
-        # concat -> (N, To, 2*H)
-        concated = torch.cat((attention_output, queries), dim=2)
-        # TODO: Move this out of this class?
-        # output -> (N, To, H)
-        output = torch.tanh(self.linear_out(
-            concated.view(-1, 2*hidden_size))).view(batch_size, -1, hidden_size)
+        # # concat -> (N, To, 2*H)
+        # concated = torch.cat((attention_output, queries), dim=2)
+        # # TODO: Move this out of this class?
+        # # output -> (N, To, H)
+        # output = torch.tanh(self.linear_out(
+        #     concated.view(-1, 2*hidden_size))).view(batch_size, -1, hidden_size)
 
-        return output, attention_distribution
+        return attention_output, attention_distribution
