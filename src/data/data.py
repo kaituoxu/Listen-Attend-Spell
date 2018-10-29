@@ -24,7 +24,7 @@ class AudioDataset(data.Dataset):
           remove batch_size to dataloader later.
     """
 
-    def __init__(self, data, batch_size, max_length_in, max_length_out,
+    def __init__(self, data_json_path, batch_size, max_length_in, max_length_out,
                  num_batches=0):
         # From: espnet/src/asr/asr_utils.py: make_batchset()
         """
@@ -33,6 +33,8 @@ class AudioDataset(data.Dataset):
             num_batches: for debug. only use num_batches minibatch but not all.
         """
         super(AudioDataset, self).__init__()
+        with open(data_json_path, 'rb') as f:
+            data = json.load(f)['utts']
         # sort it by input lengths (long to short)
         sorted_data = sorted(data.items(), key=lambda data: int(
             data[1]['input'][0]['shape'][0]), reverse=True)
@@ -96,7 +98,7 @@ def _collate_fn(batch):
     # perform padding and convert to tensor
     xs_pad = pad_list([torch.from_numpy(x).float() for x in xs], 0)
     ilens = torch.from_numpy(ilens)
-    ys_pad = pad_list([torch.from_numpy(y).float() for y in ys], IGNORE_ID)
+    ys_pad = pad_list([torch.from_numpy(y).long() for y in ys], IGNORE_ID)
     return xs_pad, ilens, ys_pad
 
 

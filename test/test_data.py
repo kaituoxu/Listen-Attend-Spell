@@ -12,9 +12,6 @@ if __name__ == "__main__":
     num_batches = 10
     num_workers = 2
 
-    with open(train_json, 'rb') as f:
-        train_json = json.load(f)['utts']
-
     train_dataset = AudioDataset(
         train_json, batch_size, max_length_in, max_length_out, num_batches)
     # NOTE: must set batch_size=1 here.
