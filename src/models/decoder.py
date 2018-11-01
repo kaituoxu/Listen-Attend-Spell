@@ -147,3 +147,115 @@ class Decoder(nn.Module):
         #     step_output = predicted_softmax[:, t, :]
         #     step_attn = attn[:, t, :]
         #     decode(t, step_output, step_attn)
+
+    def recognize_beam(self, encoder_outputs, char_list, args):
+        """Beam search, decode one utterence now.
+        Args:
+            encoder_outputs: T x H
+            char_list: list of character
+            args: args.beam
+
+        Returns:
+            nbest_hyps:
+        """
+        # search params
+        beam = args.beam_size
+        nbest = args.nbest
+        if args.decode_max_len == 0:
+            maxlen = encoder_outputs.size(0)
+        else:
+            maxlen = args.decode_max_len
+
+        # *********Init decoder rnn
+        h_list = [self.zero_state(encoder_outputs.unsqueeze(0))]
+        c_list = [self.zero_state(encoder_outputs.unsqueeze(0))]
+        for l in range(1, self.num_layers):
+            h_list.append(self.zero_state(encoder_outputs.unsqueeze(0)))
+            c_list.append(self.zero_state(encoder_outputs.unsqueeze(0)))
+        att_c = self.zero_state(encoder_outputs.unsqueeze(0),
+                                H=encoder_outputs.unsqueeze(0).size(2))
+        # prepare sos
+        y = self.sos_id
+        vy = encoder_outputs.new_zeros(1).long()
+
+        hyp = {'score': 0.0, 'yseq': [y], 'c_prev': c_list, 'h_prev': h_list,
+               'a_prev': att_c}
+        hyps = [hyp]
+        ended_hyps = []
+
+        for i in range(maxlen):
+            hyps_best_kept = []
+            for hyp in hyps:
+                # vy.unsqueeze(1)
+                vy[0] = hyp['yseq'][i]
+                embedded = self.embedding(vy)
+                # embedded.unsqueeze(0)
+                # step 1. decoder RNN: s_i = RNN(s_i−1,y_i−1,c_i−1)
+                rnn_input = torch.cat((embedded, hyp['a_prev']), dim=1)
+                h_list[0], c_list[0] = self.rnn[0](
+                    rnn_input, (hyp['h_prev'][0], hyp['c_prev'][0]))
+                for l in range(1, self.num_layers):
+                    h_list[l], c_list[l] = self.rnn[l](
+                        h_list[l-1], (hyp['h_prev'][l], hyp['c_prev'][l]))
+                rnn_output = h_list[-1]
+                # step 2. attention: c_i = AttentionContext(s_i,h)
+                # below unsqueeze: (N x H) -> (N x 1 x H)
+                att_c, att_w = self.attention(rnn_output.unsqueeze(dim=1),
+                                              encoder_outputs.unsqueeze(0))
+                att_c = att_c.squeeze(dim=1)
+                # step 3. concate s_i and c_i, and input to MLP
+                mlp_input = torch.cat((rnn_output, att_c), dim=1)
+                predicted_y_t = self.mlp(mlp_input)
+                local_scores = F.log_softmax(predicted_y_t, dim=1)
+                # topk scores
+                local_best_scores, local_best_ids = torch.topk(
+                    local_scores, beam, dim=1)
+
+                for j in range(beam):
+                    new_hyp = {}
+                    new_hyp['h_prev'] = h_list[:]
+                    new_hyp['c_prev'] = c_list[:]
+                    new_hyp['a_prev'] = att_c[:]
+                    new_hyp['score'] = hyp['score'] + local_best_scores[0, j]
+                    new_hyp['yseq'] = [0] * (1 + len(hyp['yseq']))
+                    new_hyp['yseq'][:len(hyp['yseq'])] = hyp['yseq']
+                    new_hyp['yseq'][len(hyp['yseq'])] = int(
+                        local_best_ids[0, j])
+                    # will be (2 x beam) hyps at most
+                    hyps_best_kept.append(new_hyp)
+
+                hyps_best_kept = sorted(hyps_best_kept,
+                                        key=lambda x: x['score'],
+                                        reverse=True)[:beam]
+            # end for hyp in hyps
+            hyps = hyps_best_kept
+
+            # add eos in the final loop to avoid that there are no ended hyps
+            if i == maxlen - 1:
+                for hyp in hyps:
+                    hyp['yseq'].append(self.eos_id)
+
+            # add ended hypothes to a final list, and removed them from current hypothes
+            # (this will be a probmlem, number of hyps < beam)
+            remained_hyps = []
+            for hyp in hyps:
+                if hyp['yseq'][-1] == self.eos_id:
+                    # hyp['score'] += (i + 1) * penalty
+                    ended_hyps.append(hyp)
+                else:
+                    remained_hyps.append(hyp)
+
+            hyps = remained_hyps
+            if len(hyps) > 0:
+                print('remeined hypothes: ' + str(len(hyps)))
+            else:
+                print('no hypothesis. Finish decoding.')
+                break
+
+            for hyp in hyps:
+                print('hypo: ' + ''.join([char_list[int(x)]
+                                          for x in hyp['yseq'][1:]]))
+        # end for i in range(maxlen)
+        nbest_hyps = sorted(ended_hyps, key=lambda x: x['score'], reverse=True)[
+            :min(len(ended_hyps), nbest)]
+        return nbest_hyps

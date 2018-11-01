@@ -25,10 +25,26 @@ class Seq2Seq(nn.Module):
         loss = self.decoder(padded_target, encoder_padded_outputs)
         return loss
 
+    def recognize(self, input, input_length, char_list, args):
+        """Sequence-to-Sequence beam search, decode one utterence now.
+        Args:
+            input: T x D
+            char_list: list of characters
+            args: args.beam
+
+        Returns:
+            nbest_hyps:
+        """
+        encoder_outputs, _ = self.encoder(input.unsqueeze(0), input_length)
+        nbest_hyps = self.decoder.recognize_beam(encoder_outputs[0],
+                                                 char_list,
+                                                 args)
+        return nbest_hyps
+
     @classmethod
     def load_model(cls, path):
         package = torch.load(path)
-        model = self.load_model_from_package(package)
+        model = cls.load_model_from_package(package)
         return model
 
     @classmethod

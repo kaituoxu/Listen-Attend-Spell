@@ -35,3 +35,18 @@ if __name__ == "__main__":
     # print(decoder_outputs)
     # print("To+1 =", len(decoder_outputs))
     # print("N, V =", decoder_outputs[0].size())
+
+    import argparse
+    beam_size = 5
+    nbest = 5
+    defaults = dict(beam_size=beam_size,
+                    nbest=nbest,
+                    decode_max_len=0)
+    args = argparse.Namespace(**defaults)
+    char_list = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
+    for i in range(3):
+        print("\n***** Utt", i+1)
+        Ti = i + 20
+        input = torch.randn(Ti, D)
+        length = torch.tensor([Ti], dtype=torch.int)
+        nbest_hyps = seq2seq.recognize(input, length, char_list, args)
