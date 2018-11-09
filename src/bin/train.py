@@ -7,7 +7,7 @@ from models.decoder import Decoder
 from models.encoder import Encoder
 from models.seq2seq import Seq2Seq
 from solver.solver import Solver
-from utils.utils import process_vocab
+from utils.utils import process_dict
 
 parser = argparse.ArgumentParser(
     "End-to-End Automatic Speech Recognition Training "
@@ -105,7 +105,7 @@ def main(args):
     cv_loader = AudioDataLoader(cv_dataset, batch_size=1,
                                 num_workers=args.num_workers)
     # load vocab and generate char_list, sos_id, eos_id
-    char_list, sos_id, eos_id = process_vocab(args.vocab)
+    char_list, sos_id, eos_id = process_dict(args.vocab)
     vocab_size = len(char_list)
     data = {'tr_loader': tr_loader, 'cv_loader': cv_loader}
     # model

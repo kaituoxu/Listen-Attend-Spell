@@ -5,7 +5,7 @@ import torch
 
 import kaldi_io
 from models.seq2seq import Seq2Seq
-from utils.utils import add_results_to_json, process_vocab
+from utils.utils import add_results_to_json, process_dict
 
 parser = argparse.ArgumentParser(
     "End-to-End Automatic Speech Recognition Decoding.")
@@ -32,7 +32,7 @@ parser.add_argument('--decode-max-len', default=0, type=int,
 
 def recognize(args):
     model = Seq2Seq.load_model(args.model_path)
-    char_list, sos_id, eos_id = process_vocab(args.vocab)
+    char_list, sos_id, eos_id = process_dict(args.vocab)
     assert model.decoder.sos_id == sos_id and model.decoder.eos_id == eos_id
 
     # read json data

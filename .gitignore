@@ -1,2 +1,6 @@
+src/utils/kaldi_io.py
+tools/kaldi-io-for-python/
+tools/kaldi
+
 .vscode
 __pycache__

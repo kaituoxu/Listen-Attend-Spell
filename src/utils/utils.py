@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 IGNORE_ID = -1
 
 
@@ -11,23 +12,20 @@ def pad_list(xs, pad_value):
     return pad
 
 
-def process_vocab(dict_path):
+def process_dict(dict_path):
     with open(dict_path, 'rb') as f:
         dictionary = f.readlines()
     char_list = [entry.decode('utf-8').split(' ')[0]
                  for entry in dictionary]
-    char_list.insert(0, '<blank>')
-    sos_id = len(char_list)
-    char_list.append('<sos>')
-    eos_id = len(char_list)
-    char_list.append('<eos>')
+    sos_id = char_list.index('<sos>')
+    eos_id = char_list.index('<eos>')
     return char_list, sos_id, eos_id
 
 
 if __name__ == "__main__":
     import sys
     path = sys.argv[1]
-    char_list, sos_id, eos_id = process_vocab(path)
+    char_list, sos_id, eos_id = process_dict(path)
     print(char_list, sos_id, eos_id)
 
 # * ------------------ recognition related ------------------ *

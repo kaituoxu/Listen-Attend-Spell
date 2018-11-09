@@ -1,1 +1,0 @@
-/Users/kaituoxu/Tools/kaldi-io-for-python/kaldi_io.py
