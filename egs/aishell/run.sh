@@ -1,11 +1,35 @@
 #!/bin/bash
 
-stage=-1
+stage=3
 
 dumpdir=dump   # directory to dump full features
 
-# feature configuration
+# Feature configuration
 do_delta=false
+
+# Network architecture
+# Encoder
+einput=80
+ehidden=512
+elayer=4
+etype=lstm
+# Attention
+atype=dot
+# Decoder
+dembed=512
+dhidden=1024
+dlayer=1
+
+# Training config
+epochs=30
+max_norm=5
+batch_size=32
+maxlen_in=800
+maxlen_out=150
+optimizer=adam
+lr=1e-3
+momentum=0
+print_freq=10
 
 # exp tag
 tag="" # tag for managing experiments.
@@ -81,27 +105,42 @@ if [ $stage -le 2 ]; then
     done
 fi
 
-exit 0
-
 if [ -z ${tag} ]; then
-    expdir=exp/train #_${etype}_e${elayers}_unit${eunits}_proj${eprojs}_d${dlayers}_unit${dunits}_${atype}_aconvc${aconv_chans}_aconvf${aconv_filts}_mtlalpha${mtlalpha}_${opt}_sampprob${samp_prob}_bs${batchsize}_mli${maxlen_in}_mlo${maxlen_out}
+    expdir=exp/train_in${einput}_hidden${ehidden}_e${elayer}_${etype}_${atype}_emb${dembed}_hidden${dhidden}_d${dlayer}_epoch${epochs}_norm${max_norm}_bs${batch_size}_mli${maxlen_in}_mlo${maxlen_out}_${optimizer}_lr${lr}_mmt${momentum}
     if ${do_delta}; then
         expdir=${expdir}_delta
     fi
 else
-    expdir=exp/${train_set}_${tag}
+    expdir=exp/train_${tag}
 fi
 mkdir -p ${expdir}
 
-if [ ${stage} -le 4 ]; then
+if [ ${stage} -le 3 ]; then
     echo "stage 4: Network Training"
     train.py \
-      --train-json ../../test/data/data.json \
-      --valid-json ../../test/data/data.json \
-      --vocab ../../test/data/train_nodup_sp_units.txt \
-      --einput 83 \
-      --print-freq 1 \
+      --train-json ${feat_train_dir}/data.json \
+      --valid-json ${feat_dev_dir}/data.json \
+      --dict ${dict} \
+      --einput $einput \
+      --ehidden $ehidden \
+      --ebidirectional \
+      --elayer $elayer \
+      --etype $etype \
+      --atype $atype \
+      --dembed $dembed \
+      --dhidden $dhidden \
+      --dlayer $dlayer \
+      --epochs $epochs \
+      --half-lr \
+      --early-stop \
+      --max-norm $max_norm \
+      --batch-size $batch_size \
+      --maxlen-in $maxlen_in \
+      --maxlen-out $maxlen_out \
+      --optimizer $optimizer \
+      --lr $lr \
+      --momentum $momentum \
+      --save-folder ${expdir} \
       --checkpoint \
-      --epochs 5 \
-      --batch-size 2
+      --print-freq ${print_freq}
 fi

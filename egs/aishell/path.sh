@@ -11,4 +11,4 @@ export LC_ALL=C
 # END
 
 export PATH=$SRC_ROOT/bin/:$SRC_ROOT/utils/:$PATH
-export PYTHONPATH=$SRC_ROOT/:$SRC_ROOT/data/:$SRC_ROOT/models/:$SRC_ROOT/solver/:$SRC_ROOT/utils/:$PYTHONPATH
+export PYTHONPATH=$SRC_ROOT/data/:$SRC_ROOT/models/:$SRC_ROOT/solver/:$SRC_ROOT/utils/:$PYTHONPATH

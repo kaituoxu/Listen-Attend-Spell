@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from models.decoder import Decoder
-from models.encoder import Encoder
+from decoder import Decoder
+from encoder import Encoder
 
 
 class Seq2Seq(nn.Module):

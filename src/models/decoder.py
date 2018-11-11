@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.attention import DotProductAttention
-from utils.utils import IGNORE_ID, pad_list
+from attention import DotProductAttention
+from utils import IGNORE_ID, pad_list
 
 
 class Decoder(nn.Module):
@@ -36,7 +36,7 @@ class Decoder(nn.Module):
         self.mlp = nn.Sequential(
             nn.Linear(self.encoder_hidden_size + self.hidden_size,
                       self.hidden_size),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(self.hidden_size, self.vocab_size))
 
     def zero_state(self, encoder_padded_outputs, H=None):

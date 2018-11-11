@@ -14,8 +14,8 @@ import numpy as np
 import torch
 import torch.utils.data as data
 
-import utils.kaldi_io as kaldi_io
-from utils.utils import IGNORE_ID, pad_list
+import kaldi_io
+from utils import IGNORE_ID, pad_list
 
 
 class AudioDataset(data.Dataset):

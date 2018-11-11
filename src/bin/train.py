@@ -1,13 +1,14 @@
+#!/usr/bin/env python
 import argparse
 
 import torch
 
-from data.data import AudioDataLoader, AudioDataset
-from models.decoder import Decoder
-from models.encoder import Encoder
-from models.seq2seq import Seq2Seq
-from solver.solver import Solver
-from utils.utils import process_dict
+from data import AudioDataLoader, AudioDataset
+from decoder import Decoder
+from encoder import Encoder
+from seq2seq import Seq2Seq
+from solver import Solver
+from utils import process_dict
 
 parser = argparse.ArgumentParser(
     "End-to-End Automatic Speech Recognition Training "
@@ -18,12 +19,12 @@ parser.add_argument('--train-json', type=str, default=None,
                     help='Filename of train label data (json)')
 parser.add_argument('--valid-json', type=str, default=None,
                     help='Filename of validation label data (json)')
-parser.add_argument('--vocab', type=str, required=True,
-                    help='vocab')
+parser.add_argument('--dict', type=str, required=True,
+                    help='Dictionary which should include <unk> <sos> <eos>')
 # Network architecture
 # encoder
 # TODO: automatically infer input dim
-parser.add_argument('--einput', default=40, type=int,
+parser.add_argument('--einput', default=80, type=int,
                     help='Dim of encoder input')
 parser.add_argument('--ehidden', default=512, type=int,
                     help='Size of encoder hidden units')
@@ -37,15 +38,8 @@ parser.add_argument('--etype', default='lstm', type=str,
 parser.add_argument('--atype', default='dot', type=str,
                     help='Type of attention (Only support Dot Product now)')
 # decoder
-# TODO: automatically infer vocab size/sos id/eos id
-# parser.add_argument('--dvocab-size', default=5000, type=int,
-#                     help='Size of output vocab')
 parser.add_argument('--dembed', default=512, type=int,
                     help='Size of decoder embedding')
-# parser.add_argument('--dsos-id', default=0, type=int,
-#                     help='End-Of-Sentence index')
-# parser.add_argument('--deos-id', default=1, type=int,
-#                     help='End-Of-Sentence index')
 parser.add_argument('--dhidden', default=512*2, type=int,
                     help='Size of decoder hidden units. Should be encoder '
                     '(2*) hidden size dependding on bidirection')
@@ -73,9 +67,9 @@ parser.add_argument('--num-workers', default=4, type=int,
                     help='Number of workers to generate minibatch')
 # optimizer
 parser.add_argument('--optimizer', default='sgd', type=str,
-                    choices=['sgd'],
-                    help='Optimizer (Only support SGD now)')
-parser.add_argument('--lr', default=1e-4, type=float,
+                    choices=['sgd, adam'],
+                    help='Optimizer (support sgd and adam now)')
+parser.add_argument('--lr', default=1, type=float,
                     help='Init learning rate')
 parser.add_argument('--momentum', default=0.0, type=float,
                     help='Momentum for optimizer')
@@ -104,8 +98,8 @@ def main(args):
                                 num_workers=args.num_workers)
     cv_loader = AudioDataLoader(cv_dataset, batch_size=1,
                                 num_workers=args.num_workers)
-    # load vocab and generate char_list, sos_id, eos_id
-    char_list, sos_id, eos_id = process_dict(args.vocab)
+    # load dictionary and generate char_list, sos_id, eos_id
+    char_list, sos_id, eos_id = process_dict(args.dict)
     vocab_size = len(char_list)
     data = {'tr_loader': tr_loader, 'cv_loader': cv_loader}
     # model
@@ -118,9 +112,17 @@ def main(args):
     print(model)
     model.cuda()
     # optimizer
-    optimizier = torch.optim.SGD(model.parameters(),
-                                 lr=args.lr,
-                                 momentum=args.momentum)
+    if args.optimizer == 'sgd':
+        optimizier = torch.optim.SGD(model.parameters(),
+                                     lr=args.lr,
+                                     momentum=args.momentum)
+    elif args.optimizer == 'adam':
+        optimizier = torch.optim.Adam(model.parameters(),
+                                      lr=args.lr)
+    else:
+        print("Not support optimizer")
+        return
+
     # solver
     solver = Solver(data, model, optimizier, args)
     solver.train()
