@@ -49,9 +49,9 @@ parser.add_argument('--dlayer', default=1, type=int,
 # Training config
 parser.add_argument('--epochs', default=30, type=int,
                     help='Number of maximum epochs')
-parser.add_argument('--half-lr', dest='half_lr', action='store_true',
+parser.add_argument('--half-lr', dest='half_lr', default=0, type=int,
                     help='Halving learning rate when get small improvement')
-parser.add_argument('--early-stop', dest='early_stop', action='store_true',
+parser.add_argument('--early-stop', dest='early_stop', default=0, type=int,
                     help='Early stop training when halving lr but still get'
                     'small improvement')
 parser.add_argument('--max-norm', default=5, type=float,
@@ -66,17 +66,19 @@ parser.add_argument('--maxlen-out', default=150, type=int, metavar='ML',
 parser.add_argument('--num-workers', default=4, type=int,
                     help='Number of workers to generate minibatch')
 # optimizer
-parser.add_argument('--optimizer', default='sgd', type=str,
-                    choices=['sgd, adam'],
+parser.add_argument('--optimizer', default='adam', type=str,
+                    choices=['sgd', 'adam'],
                     help='Optimizer (support sgd and adam now)')
-parser.add_argument('--lr', default=1, type=float,
+parser.add_argument('--lr', default=1e-3, type=float,
                     help='Init learning rate')
 parser.add_argument('--momentum', default=0.0, type=float,
                     help='Momentum for optimizer')
+parser.add_argument('--l2', default=0.0, type=float,
+                    help='weight decay (L2 penalty)')
 # save and load model
 parser.add_argument('--save-folder', default='exp/temp',
                     help='Location to save epoch models')
-parser.add_argument('--checkpoint', dest='checkpoint', action='store_true',
+parser.add_argument('--checkpoint', dest='checkpoint', default=0, type=int,
                     help='Enables checkpoint saving of model')
 parser.add_argument('--continue-from', default='',
                     help='Continue from checkpoint model')
@@ -115,10 +117,12 @@ def main(args):
     if args.optimizer == 'sgd':
         optimizier = torch.optim.SGD(model.parameters(),
                                      lr=args.lr,
-                                     momentum=args.momentum)
+                                     momentum=args.momentum,
+                                     weight_decay=args.l2)
     elif args.optimizer == 'adam':
         optimizier = torch.optim.Adam(model.parameters(),
-                                      lr=args.lr)
+                                      lr=args.lr,
+                                      weight_decay=args.l2)
     else:
         print("Not support optimizer")
         return

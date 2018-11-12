@@ -21,7 +21,9 @@ dhidden=1024
 dlayer=1
 
 # Training config
-epochs=30
+epochs=20
+half_lr=1
+early_stop=0
 max_norm=5
 batch_size=32
 maxlen_in=800
@@ -29,6 +31,8 @@ maxlen_out=150
 optimizer=adam
 lr=1e-3
 momentum=0
+l2=0
+checkpoint=1
 print_freq=10
 
 # exp tag
@@ -106,7 +110,7 @@ if [ $stage -le 2 ]; then
 fi
 
 if [ -z ${tag} ]; then
-    expdir=exp/train_in${einput}_hidden${ehidden}_e${elayer}_${etype}_${atype}_emb${dembed}_hidden${dhidden}_d${dlayer}_epoch${epochs}_norm${max_norm}_bs${batch_size}_mli${maxlen_in}_mlo${maxlen_out}_${optimizer}_lr${lr}_mmt${momentum}
+    expdir=exp/train_in${einput}_hidden${ehidden}_e${elayer}_${etype}_${atype}_emb${dembed}_hidden${dhidden}_d${dlayer}_epoch${epochs}_norm${max_norm}_bs${batch_size}_mli${maxlen_in}_mlo${maxlen_out}_${optimizer}_lr${lr}_mmt${momentum}_l2${l2}
     if ${do_delta}; then
         expdir=${expdir}_delta
     fi
@@ -131,8 +135,8 @@ if [ ${stage} -le 3 ]; then
       --dhidden $dhidden \
       --dlayer $dlayer \
       --epochs $epochs \
-      --half-lr \
-      --early-stop \
+      --half-lr $half_lr \
+      --early-stop $early_stop \
       --max-norm $max_norm \
       --batch-size $batch_size \
       --maxlen-in $maxlen_in \
@@ -140,7 +144,8 @@ if [ ${stage} -le 3 ]; then
       --optimizer $optimizer \
       --lr $lr \
       --momentum $momentum \
+      --l2 $l2 \
       --save-folder ${expdir} \
-      --checkpoint \
+      --checkpoint $checkpoint \
       --print-freq ${print_freq}
 fi
