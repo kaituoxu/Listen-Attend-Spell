@@ -16,6 +16,7 @@ einput=80
 ehidden=256
 elayer=3
 etype=lstm
+edropout=0.0
 # Attention
 atype=dot
 # Decoder
@@ -136,8 +137,9 @@ if [ ${stage} -le 3 ]; then
         --dict ${dict} \
         --einput $einput \
         --ehidden $ehidden \
-        --ebidirectional \
         --elayer $elayer \
+        --edropout $edropout \
+        --ebidirectional \
         --etype $etype \
         --atype $atype \
         --dembed $dembed \

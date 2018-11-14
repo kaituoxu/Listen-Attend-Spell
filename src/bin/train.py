@@ -30,6 +30,8 @@ parser.add_argument('--ehidden', default=512, type=int,
                     help='Size of encoder hidden units')
 parser.add_argument('--elayer', default=4, type=int,
                     help='Number of encoder layers.')
+parser.add_argument('--edropout', default=0.0, type=float,
+                    help='Encoder dropout rate')
 parser.add_argument('--ebidirectional', default=True, action='store_true',
                     help='Whether use bidirectional encoder')
 parser.add_argument('--etype', default='lstm', type=str,
@@ -106,7 +108,8 @@ def main(args):
     data = {'tr_loader': tr_loader, 'cv_loader': cv_loader}
     # model
     encoder = Encoder(args.einput, args.ehidden, args.elayer,
-                      bidirectional=args.ebidirectional, rnn_type=args.etype)
+                      dropout=args.edropout, bidirectional=args.ebidirectional,
+                      rnn_type=args.etype)
     decoder = Decoder(vocab_size, args.dembed, sos_id,
                       eos_id, args.dhidden, args.dlayer,
                       bidirectional_encoder=args.ebidirectional)

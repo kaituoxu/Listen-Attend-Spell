@@ -7,16 +7,18 @@ class Encoder(nn.Module):
     """
 
     def __init__(self, input_size, hidden_size, num_layers,
-                 bidirectional=True, rnn_type='lstm'):
+                 dropout=0.0, bidirectional=True, rnn_type='lstm'):
         super(Encoder, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.bidirectional = bidirectional
         self.rnn_type = rnn_type
+        self.dropout = dropout
         if self.rnn_type == 'lstm':
             self.rnn = nn.LSTM(input_size, hidden_size, num_layers,
                                batch_first=True,
+                               dropout=dropout,
                                bidirectional=bidirectional)
 
     def forward(self, padded_input, input_lengths):

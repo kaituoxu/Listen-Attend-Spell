@@ -34,6 +34,7 @@ parser.add_argument('--decode-max-len', default=0, type=int,
 def recognize(args):
     model = Seq2Seq.load_model(args.model_path)
     print(model)
+    model.eval()
     model.cuda()
     char_list, sos_id, eos_id = process_dict(args.dict)
     assert model.decoder.sos_id == sos_id and model.decoder.eos_id == eos_id

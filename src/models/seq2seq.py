@@ -53,6 +53,7 @@ class Seq2Seq(nn.Module):
         encoder = Encoder(package['einput'],
                           package['ehidden'],
                           package['elayer'],
+                          dropout=package['edropout'],
                           bidirectional=package['ebidirectional'],
                           rnn_type=package['etype'])
         decoder = Decoder(package['dvocab_size'],
@@ -75,6 +76,7 @@ class Seq2Seq(nn.Module):
             'einput': model.encoder.input_size,
             'ehidden': model.encoder.hidden_size,
             'elayer': model.encoder.num_layers,
+            'edropout': model.encoder.dropout,
             'ebidirectional': model.encoder.bidirectional,
             'etype': model.encoder.rnn_type,
             # decoder
