@@ -1,6 +1,9 @@
 #!/bin/bash
 
-stage=3
+stage=-1
+
+ngpu=1         # number of gpus ("0" uses cpu, otherwise use gpu)
+nj=40
 
 dumpdir=dump   # directory to dump full features
 
@@ -10,14 +13,14 @@ do_delta=false
 # Network architecture
 # Encoder
 einput=80
-ehidden=512
-elayer=4
+ehidden=256
+elayer=3
 etype=lstm
 # Attention
 atype=dot
 # Decoder
 dembed=512
-dhidden=1024
+dhidden=512
 dlayer=1
 
 # Training config
@@ -31,14 +34,19 @@ maxlen_out=150
 optimizer=adam
 lr=1e-3
 momentum=0
-l2=0
+l2=1e-4
 checkpoint=1
 print_freq=10
+
+# Decode config
+beam_size=30
+nbest=1
+decode_max_len=100
 
 # exp tag
 tag="" # tag for managing experiments.
 
-data=/home/ktxu/workspace/data/aishell
+data=/home/work_nfs/common/data
 
 . utils/parse_options.sh || exit 1;
 . ./cmd.sh
@@ -67,7 +75,7 @@ if [ $stage -le 1 ]; then
     ### But you can utilize Kaldi recipes in most cases
     fbankdir=fbank
     for data in train test dev; do
-        steps/make_fbank.sh --cmd "$train_cmd" --nj 20 --write_utt2num_frames true \
+        steps/make_fbank.sh --cmd "$train_cmd" --nj $nj --write_utt2num_frames true \
             data/$data exp/make_fbank/$data $fbankdir/$data || exit 1;
     done
     # compute global CMVN
@@ -75,7 +83,7 @@ if [ $stage -le 1 ]; then
     # dump features for training
     for data in train test dev; do
         feat_dir=`eval echo '$feat_'${data}'_dir'`
-        dump.sh --cmd "$train_cmd" --nj 20 --do_delta $do_delta \
+        dump.sh --cmd "$train_cmd" --nj $nj --do_delta $do_delta \
             data/$data/feats.scp data/train/cmvn.ark exp/dump_feats/$data $feat_dir
     done
 fi
@@ -121,31 +129,49 @@ mkdir -p ${expdir}
 
 if [ ${stage} -le 3 ]; then
     echo "stage 4: Network Training"
-    train.py \
-      --train-json ${feat_train_dir}/data.json \
-      --valid-json ${feat_dev_dir}/data.json \
-      --dict ${dict} \
-      --einput $einput \
-      --ehidden $ehidden \
-      --ebidirectional \
-      --elayer $elayer \
-      --etype $etype \
-      --atype $atype \
-      --dembed $dembed \
-      --dhidden $dhidden \
-      --dlayer $dlayer \
-      --epochs $epochs \
-      --half-lr $half_lr \
-      --early-stop $early_stop \
-      --max-norm $max_norm \
-      --batch-size $batch_size \
-      --maxlen-in $maxlen_in \
-      --maxlen-out $maxlen_out \
-      --optimizer $optimizer \
-      --lr $lr \
-      --momentum $momentum \
-      --l2 $l2 \
-      --save-folder ${expdir} \
-      --checkpoint $checkpoint \
-      --print-freq ${print_freq}
+    ${cuda_cmd} --gpu ${ngpu} ${expdir}/train.log \
+        train.py \
+        --train-json ${feat_train_dir}/data.json \
+        --valid-json ${feat_dev_dir}/data.json \
+        --dict ${dict} \
+        --einput $einput \
+        --ehidden $ehidden \
+        --ebidirectional \
+        --elayer $elayer \
+        --etype $etype \
+        --atype $atype \
+        --dembed $dembed \
+        --dhidden $dhidden \
+        --dlayer $dlayer \
+        --epochs $epochs \
+        --half-lr $half_lr \
+        --early-stop $early_stop \
+        --max-norm $max_norm \
+        --batch-size $batch_size \
+        --maxlen-in $maxlen_in \
+        --maxlen-out $maxlen_out \
+        --optimizer $optimizer \
+        --lr $lr \
+        --momentum $momentum \
+        --l2 $l2 \
+        --save-folder ${expdir} \
+        --checkpoint $checkpoint \
+        --print-freq ${print_freq}
+fi
+
+if [ ${stage} -le 4 ]; then
+    echo "stage 5: Decoding"
+    decode_dir=${expdir}/decode_test_beam${beam_size}_nbest${nbest}_ml${decode_max_len}
+    mkdir -p ${decode_dir}
+    ${cuda_cmd} --gpu ${ngpu} ${decode_dir}/decode.log \
+        recognize.py \
+        --recog-json ${feat_test_dir}/data.json \
+        --dict $dict \
+        --result-label ${decode_dir}/data.json \
+        --model-path ${expdir}/final.pth.tar \
+        --beam-size $beam_size \
+        --nbest $nbest \
+        --decode-max-len $decode_max_len
+
+    local/score.sh --nlsyms ${nlsyms} ${decode_dir} ${dict}
 fi

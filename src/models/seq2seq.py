@@ -43,7 +43,8 @@ class Seq2Seq(nn.Module):
 
     @classmethod
     def load_model(cls, path):
-        package = torch.load(path)
+        # Load to CPU
+        package = torch.load(path, map_location=lambda storage, loc: storage)
         model = cls.load_model_from_package(package)
         return model
 
@@ -62,6 +63,7 @@ class Seq2Seq(nn.Module):
                           package['dlayer'],
                           bidirectional_encoder=package['ebidirectional']
                           )
+        encoder.flatten_parameters()
         model = cls(encoder, decoder)
         model.load_state_dict(package['state_dict'])
         return model

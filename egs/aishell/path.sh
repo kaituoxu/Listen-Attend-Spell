@@ -10,5 +10,6 @@ export PATH=$PWD/utils/:$KALDI_ROOT/tools/openfst/bin:$KALDI_ROOT/tools/sctk/bin
 export LC_ALL=C
 # END
 
+export PATH=/home/work_nfs/ktxu/tools/anaconda3/bin:$PATH
 export PATH=$SRC_ROOT/bin/:$SRC_ROOT/utils/:$PATH
 export PYTHONPATH=$SRC_ROOT/data/:$SRC_ROOT/models/:$SRC_ROOT/solver/:$SRC_ROOT/utils/:$PYTHONPATH

@@ -39,3 +39,6 @@ class Encoder(nn.Module):
                                         batch_first=True,
                                         total_length=total_length)
         return output, hidden
+
+    def flatten_parameters(self):
+        self.rnn.flatten_parameters()

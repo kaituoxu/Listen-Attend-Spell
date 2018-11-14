@@ -33,6 +33,8 @@ parser.add_argument('--decode-max-len', default=0, type=int,
 
 def recognize(args):
     model = Seq2Seq.load_model(args.model_path)
+    print(model)
+    model.cuda()
     char_list, sos_id, eos_id = process_dict(args.dict)
     assert model.decoder.sos_id == sos_id and model.decoder.eos_id == eos_id
 
@@ -44,10 +46,13 @@ def recognize(args):
     new_js = {}
     with torch.no_grad():
         for idx, name in enumerate(js.keys(), 1):
-            print('(%d/%d) decoding %s' % (idx, len(js.keys()), name))
+            print('(%d/%d) decoding %s' %
+                  (idx, len(js.keys()), name), flush=True)
             input = kaldi_io.read_mat(js[name]['input'][0]['feat'])  # TxD
             input = torch.from_numpy(input).float()
             input_length = torch.tensor([input.size(0)], dtype=torch.int)
+            input = input.cuda()
+            input_length = input_length.cuda()
             nbest_hyps = model.recognize(input, input_length, char_list, args)
             new_js[name] = add_results_to_json(js[name], nbest_hyps, char_list)
 
@@ -58,5 +63,5 @@ def recognize(args):
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    print(args)
+    print(args, flush=True)
     recognize(args)
