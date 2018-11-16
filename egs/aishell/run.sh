@@ -8,14 +8,14 @@ nj=40
 dumpdir=dump   # directory to dump full features
 
 # Feature configuration
-do_delta=false
+do_delta=true
 
 # Network architecture
 # Encoder
-einput=80
+einput=240
 ehidden=256
 elayer=3
-edropout=0.0
+edropout=0.2
 ebidirectional=1
 etype=lstm
 # Attention
@@ -36,7 +36,7 @@ maxlen_out=150
 optimizer=adam
 lr=1e-3
 momentum=0
-l2=1e-4
+l2=1e-5
 checkpoint=1
 print_freq=10
 visdom=0
@@ -163,7 +163,7 @@ if [ ${stage} -le 3 ]; then
         --checkpoint $checkpoint \
         --print-freq ${print_freq} \
         --visdom $visdom \
-        --visdom-id $visdom_id
+        --visdom-id "$visdom_id"
 fi
 
 if [ ${stage} -le 4 ]; then
