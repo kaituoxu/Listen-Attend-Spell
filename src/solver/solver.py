@@ -33,7 +33,7 @@ class Solver(object):
         self.visdom_id = args.visdom_id
         if self.visdom:
             from visdom import Visdom
-            self.vis = Visdom()
+            self.vis = Visdom(env=self.visdom_id)
             self.vis_opts = dict(title=self.visdom_id,
                                  ylabel='Loss', xlabel='Epoch',
                                  legend=['train loss', 'cv loss'])
@@ -120,6 +120,7 @@ class Solver(object):
                            file_path)
                 print("Find better validated model, saving to %s" % file_path)
 
+            # visualizing loss using visdom
             self.tr_loss[epoch] = tr_avg_loss
             self.cv_loss[epoch] = val_loss
             if self.visdom:
@@ -146,6 +147,15 @@ class Solver(object):
         total_loss = 0
 
         data_loader = self.tr_loader if not cross_valid else self.cv_loader
+
+        # visualizing loss using visdom
+        if self.visdom and not cross_valid:
+            vis_opts_epoch = dict(title=self.visdom_id + " epoch " + str(epoch),
+                                  ylabel='Loss', xlabel='Epoch')
+            vis_window_epoch = None
+            vis_iters = torch.arange(1, len(data_loader) + 1)
+            vis_iters_loss = torch.Tensor(len(data_loader))
+
         for i, (data) in enumerate(data_loader):
             padded_input, input_lengths, padded_target = data
             padded_input = padded_input.cuda()
@@ -167,5 +177,18 @@ class Solver(object):
                           epoch + 1, i + 1, total_loss / (i + 1),
                           loss.item(), 1000 * (time.time() - start) / (i + 1)),
                       flush=True)
+
+            # visualizing loss using visdom
+            if self.visdom and not cross_valid:
+                vis_iters_loss[i] = loss.item()
+                if i % self.print_freq == 0:
+                    x_axis = vis_iters[:i+1]
+                    y_axis = vis_iters_loss[:i+1]
+                    if vis_window_epoch is None:
+                        vis_window_epoch = self.vis.line(X=x_axis, Y=y_axis,
+                                                         opts=vis_opts_epoch)
+                    else:
+                        self.vis.line(X=x_axis, Y=y_axis, win=vis_window_epoch,
+                                      update='replace')
 
         return total_loss / (i + 1)
