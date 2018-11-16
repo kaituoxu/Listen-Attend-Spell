@@ -26,6 +26,19 @@ class Solver(object):
         self.model_path = args.model_path
         # logging
         self.print_freq = args.print_freq
+        # visualizing loss using visdom
+        self.tr_loss = torch.Tensor(self.epochs)
+        self.cv_loss = torch.Tensor(self.epochs)
+        self.visdom = args.visdom
+        self.visdom_id = args.visdom_id
+        if self.visdom:
+            from visdom import Visdom
+            self.vis = Visdom()
+            self.vis_opts = dict(title=self.visdom_id,
+                                 ylabel='Loss', xlabel='Epoch',
+                                 legend=['train loss', 'cv loss'])
+            self.vis_window = None
+            self.vis_epochs = torch.arange(1, self.epochs + 1)
 
         self._reset()
 
@@ -37,6 +50,8 @@ class Solver(object):
             self.model.load_state_dict(package['state_dict'])
             self.optimizer.load_state_dict(package['optim_dict'])
             self.start_epoch = int(package.get('epoch', 1))
+            self.tr_loss[:self.start_epoch] = package['tr_loss']
+            self.cv_loss[:self.start_epoch] = package['cv_loss']
         else:
             self.start_epoch = 0
         # Create save folder
@@ -63,7 +78,9 @@ class Solver(object):
             if self.checkpoint:
                 file_path = os.path.join(
                     self.save_folder, 'epoch%d.pth.tar' % (epoch + 1))
-                torch.save(self.model.serialize(self.model, self.optimizer, epoch + 1),
+                torch.save(self.model.serialize(self.model, self.optimizer, epoch + 1,
+                                                tr_loss=self.tr_loss,
+                                                cv_loss=self.cv_loss),
                            file_path)
                 print('Saving checkpoint model to %s' % file_path)
 
@@ -97,9 +114,32 @@ class Solver(object):
             if val_loss < self.best_val_loss:
                 self.best_val_loss = val_loss
                 file_path = os.path.join(self.save_folder, self.model_path)
-                torch.save(self.model.serialize(self.model, self.optimizer, epoch + 1),
+                torch.save(self.model.serialize(self.model, self.optimizer, epoch + 1,
+                                                tr_loss=self.tr_loss,
+                                                cv_loss=self.cv_loss),
                            file_path)
                 print("Find better validated model, saving to %s" % file_path)
+
+            self.tr_loss[epoch] = tr_avg_loss
+            self.cv_loss[epoch] = val_loss
+            if self.visdom:
+                x_axis = self.vis_epochs[0:epoch + 1]
+                y_axis = torch.stack(
+                    (self.tr_loss[0:epoch + 1], self.cv_loss[0:epoch + 1]), dim=1)
+                if self.vis_window is None:
+                    self.vis_window = self.vis.line(
+                        X=x_axis,
+                        Y=y_axis,
+                        opts=self.vis_opts,
+                    )
+                else:
+                    self.vis.line(
+                        X=x_axis.unsqueeze(0).expand(y_axis.size(
+                            1), x_axis.size(0)).transpose(0, 1),  # Visdom fix
+                        Y=y_axis,
+                        win=self.vis_window,
+                        update='replace',
+                    )
 
     def _run_one_epoch(self, epoch, cross_valid=False):
         start = time.time()

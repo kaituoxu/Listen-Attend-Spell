@@ -32,7 +32,7 @@ parser.add_argument('--elayer', default=4, type=int,
                     help='Number of encoder layers.')
 parser.add_argument('--edropout', default=0.0, type=float,
                     help='Encoder dropout rate')
-parser.add_argument('--ebidirectional', default=True, action='store_true',
+parser.add_argument('--ebidirectional', default=1, type=int,
                     help='Whether use bidirectional encoder')
 parser.add_argument('--etype', default='lstm', type=str,
                     help='Type of encoder RNN')
@@ -89,6 +89,10 @@ parser.add_argument('--model-path', default='final.pth.tar',
 # logging
 parser.add_argument('--print-freq', default=10, type=int,
                     help='Frequency of printing training infomation')
+parser.add_argument('--visdom', dest='visdom', type=int, default=0,
+                    help='Turn on visdom graphing')
+parser.add_argument('--visdom-id', default='LAS training',
+                    help='Identifier for visdom run')
 
 
 def main(args):

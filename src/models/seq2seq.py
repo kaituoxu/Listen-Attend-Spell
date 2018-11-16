@@ -70,7 +70,7 @@ class Seq2Seq(nn.Module):
         return model
 
     @staticmethod
-    def serialize(model, optimizer, epoch):
+    def serialize(model, optimizer, epoch, tr_loss=None, cv_loss=None):
         package = {
             # encoder
             'einput': model.encoder.input_size,
@@ -91,4 +91,7 @@ class Seq2Seq(nn.Module):
             'optim_dict': optimizer.state_dict(),
             'epoch': epoch
         }
+        if tr_loss is not None:
+            package['tr_loss'] = tr_loss
+            package['cv_loss'] = cv_loss
         return package

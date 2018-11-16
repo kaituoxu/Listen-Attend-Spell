@@ -15,8 +15,9 @@ do_delta=false
 einput=80
 ehidden=256
 elayer=3
-etype=lstm
 edropout=0.0
+ebidirectional=1
+etype=lstm
 # Attention
 atype=dot
 # Decoder
@@ -38,6 +39,8 @@ momentum=0
 l2=1e-4
 checkpoint=1
 print_freq=10
+visdom=0
+visdom_id="LAS Training"
 
 # Decode config
 beam_size=30
@@ -119,7 +122,7 @@ if [ $stage -le 2 ]; then
 fi
 
 if [ -z ${tag} ]; then
-    expdir=exp/train_in${einput}_hidden${ehidden}_e${elayer}_${etype}_${atype}_emb${dembed}_hidden${dhidden}_d${dlayer}_epoch${epochs}_norm${max_norm}_bs${batch_size}_mli${maxlen_in}_mlo${maxlen_out}_${optimizer}_lr${lr}_mmt${momentum}_l2${l2}
+    expdir=exp/train_in${einput}_hidden${ehidden}_e${elayer}_${etype}_drop${edropout}_${atype}_emb${dembed}_hidden${dhidden}_d${dlayer}_epoch${epochs}_norm${max_norm}_bs${batch_size}_mli${maxlen_in}_mlo${maxlen_out}_${optimizer}_lr${lr}_mmt${momentum}_l2${l2}
     if ${do_delta}; then
         expdir=${expdir}_delta
     fi
@@ -139,7 +142,7 @@ if [ ${stage} -le 3 ]; then
         --ehidden $ehidden \
         --elayer $elayer \
         --edropout $edropout \
-        --ebidirectional \
+        --ebidirectional $ebidirectional \
         --etype $etype \
         --atype $atype \
         --dembed $dembed \
@@ -158,7 +161,9 @@ if [ ${stage} -le 3 ]; then
         --l2 $l2 \
         --save-folder ${expdir} \
         --checkpoint $checkpoint \
-        --print-freq ${print_freq}
+        --print-freq ${print_freq} \
+        --visdom $visdom \
+        --visdom-id $visdom_id
 fi
 
 if [ ${stage} -le 4 ]; then
@@ -175,5 +180,6 @@ if [ ${stage} -le 4 ]; then
         --nbest $nbest \
         --decode-max-len $decode_max_len
 
+    # Compute CER
     local/score.sh --nlsyms ${nlsyms} ${decode_dir} ${dict}
 fi

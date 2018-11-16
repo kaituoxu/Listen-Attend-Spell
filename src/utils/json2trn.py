@@ -7,7 +7,7 @@
 import json
 import argparse
 import logging
-from utils.utils import process_vocab
+from utils import process_dict
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -26,7 +26,7 @@ if __name__ == '__main__':
         j = json.load(f)
 
     logging.info("reading %s", args.dict)
-    char_list, sos_id, eos_id = process_vocab(args.dict)
+    char_list, sos_id, eos_id = process_dict(args.dict)
     # with open(args.dict, 'r') as f:
     #     dictionary = f.readlines()
     # char_list = [unicode(entry.split(' ')[0], 'utf_8') for entry in dictionary]
