@@ -1,5 +1,5 @@
-# End-to-End Automatic Speech Recognition with Listen Attend and Spell framework
-This is a PyTorch implementation of End-to-End ASR with [Listen Attend and Spell (LAS)](https://arxiv.org/abs/1508.01211v2) framework.
+# End-to-End ASR with Listen Attend and Spell Framework
+This is a PyTorch implementation of End-to-End Automatic Speech Recognition with [Listen Attend and Spell (LAS)](https://arxiv.org/abs/1508.01211v2) framework.
 
 # Install
 - PyTorch 0.4.1+
