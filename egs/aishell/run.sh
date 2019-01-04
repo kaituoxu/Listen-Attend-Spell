@@ -33,11 +33,14 @@ max_norm=5
 batch_size=32
 maxlen_in=800
 maxlen_out=150
+# optimizer
 optimizer=adam
 lr=1e-3
 momentum=0
 l2=1e-5
-checkpoint=1
+# logging and visualize
+checkpoint=0
+continue_from=""
 print_freq=10
 visdom=0
 visdom_id="LAS Training"
@@ -132,7 +135,7 @@ fi
 mkdir -p ${expdir}
 
 if [ ${stage} -le 3 ]; then
-    echo "stage 4: Network Training"
+    echo "stage 3: Network Training"
     ${cuda_cmd} --gpu ${ngpu} ${expdir}/train.log \
         train.py \
         --train-json ${feat_train_dir}/data.json \
@@ -161,13 +164,14 @@ if [ ${stage} -le 3 ]; then
         --l2 $l2 \
         --save-folder ${expdir} \
         --checkpoint $checkpoint \
+        --continue-from "$continue_from" \
         --print-freq ${print_freq} \
         --visdom $visdom \
         --visdom-id "$visdom_id"
 fi
 
 if [ ${stage} -le 4 ]; then
-    echo "stage 5: Decoding"
+    echo "stage 4: Decoding"
     decode_dir=${expdir}/decode_test_beam${beam_size}_nbest${nbest}_ml${decode_max_len}
     mkdir -p ${decode_dir}
     ${cuda_cmd} --gpu ${ngpu} ${decode_dir}/decode.log \
