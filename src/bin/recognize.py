@@ -8,24 +8,25 @@ import kaldi_io
 from seq2seq import Seq2Seq
 from utils import add_results_to_json, process_dict
 
+
 parser = argparse.ArgumentParser(
     "End-to-End Automatic Speech Recognition Decoding.")
 # data
-parser.add_argument('--recog-json', type=str, required=True,
+parser.add_argument('--recog_json', type=str, required=True,
                     help='Filename of recognition data (json)')
 parser.add_argument('--dict', type=str, required=True,
                     help='Dictionary which should include <unk> <sos> <eos>')
-parser.add_argument('--result-label', type=str, required=True,
+parser.add_argument('--result_label', type=str, required=True,
                     help='Filename of result label data (json)')
 # model
-parser.add_argument('--model-path', type=str, required=True,
+parser.add_argument('--model_path', type=str, required=True,
                     help='Path to model file created by training')
 # decode
-parser.add_argument('--beam-size', default=1, type=int,
+parser.add_argument('--beam_size', default=1, type=int,
                     help='Beam size')
 parser.add_argument('--nbest', default=1, type=int,
                     help='Nbest size')
-parser.add_argument('--decode-max-len', default=0, type=int,
+parser.add_argument('--decode_max_len', default=0, type=int,
                     help='Max output length. If ==0 (default), it uses a '
                     'end-detect function to automatically find maximum '
                     'hypothesis lengths')

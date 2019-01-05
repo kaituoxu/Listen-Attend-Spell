@@ -1,6 +1,9 @@
 #!/bin/bash
 
-stage=-1
+# -- IMPORTANT
+data=/home/work_nfs/common/data # Modify to your aishell data path
+stage=-1  # Modify to control start from witch stage
+# --
 
 ngpu=1         # number of gpus ("0" uses cpu, otherwise use gpu)
 nj=40
@@ -53,14 +56,12 @@ decode_max_len=100
 # exp tag
 tag="" # tag for managing experiments.
 
-data=/home/work_nfs/common/data
-
 . utils/parse_options.sh || exit 1;
 . ./cmd.sh
 . ./path.sh
 
 if [ $stage -le 0 ]; then
-    echo "stage 0: Data Preparation"
+    echo "Stage 0: Data Preparation"
     ### Task dependent. You have to make data the following preparation part by yourself.
     ### But you can utilize Kaldi recipes in most cases
     # Generate wav.scp, text, utt2spk, spk2utt (segments)
@@ -77,7 +78,7 @@ feat_train_dir=${dumpdir}/train/delta${do_delta}; mkdir -p ${feat_train_dir}
 feat_test_dir=${dumpdir}/test/delta${do_delta}; mkdir -p ${feat_test_dir}
 feat_dev_dir=${dumpdir}/dev/delta${do_delta}; mkdir -p ${feat_dev_dir}
 if [ $stage -le 1 ]; then
-    echo "stage 1: Feature Generation"
+    echo "Stage 1: Feature Generation"
     ### Task dependent. You have to make data the following preparation part by yourself.
     ### But you can utilize Kaldi recipes in most cases
     fbankdir=fbank
@@ -99,7 +100,7 @@ dict=data/lang_1char/train_chars.txt
 echo "dictionary: ${dict}"
 nlsyms=data/lang_1char/non_lang_syms.txt
 if [ $stage -le 2 ]; then
-    echo "stage 2: Dictionary and Json Data Preparation"
+    echo "Stage 2: Dictionary and Json Data Preparation"
     ### Task dependent. You have to check non-linguistic symbols used in the corpus.
     mkdir -p data/lang_1char/
 
@@ -135,11 +136,11 @@ fi
 mkdir -p ${expdir}
 
 if [ ${stage} -le 3 ]; then
-    echo "stage 3: Network Training"
+    echo "Stage 3: Network Training"
     ${cuda_cmd} --gpu ${ngpu} ${expdir}/train.log \
         train.py \
-        --train-json ${feat_train_dir}/data.json \
-        --valid-json ${feat_dev_dir}/data.json \
+        --train_json ${feat_train_dir}/data.json \
+        --valid_json ${feat_dev_dir}/data.json \
         --dict ${dict} \
         --einput $einput \
         --ehidden $ehidden \
@@ -152,37 +153,37 @@ if [ ${stage} -le 3 ]; then
         --dhidden $dhidden \
         --dlayer $dlayer \
         --epochs $epochs \
-        --half-lr $half_lr \
-        --early-stop $early_stop \
-        --max-norm $max_norm \
-        --batch-size $batch_size \
-        --maxlen-in $maxlen_in \
-        --maxlen-out $maxlen_out \
+        --half_lr $half_lr \
+        --early_stop $early_stop \
+        --max_norm $max_norm \
+        --batch_size $batch_size \
+        --maxlen_in $maxlen_in \
+        --maxlen_out $maxlen_out \
         --optimizer $optimizer \
         --lr $lr \
         --momentum $momentum \
         --l2 $l2 \
-        --save-folder ${expdir} \
+        --save_folder ${expdir} \
         --checkpoint $checkpoint \
-        --continue-from "$continue_from" \
-        --print-freq ${print_freq} \
+        --continue_from "$continue_from" \
+        --print_freq ${print_freq} \
         --visdom $visdom \
-        --visdom-id "$visdom_id"
+        --visdom_id "$visdom_id"
 fi
 
 if [ ${stage} -le 4 ]; then
-    echo "stage 4: Decoding"
+    echo "Stage 4: Decoding"
     decode_dir=${expdir}/decode_test_beam${beam_size}_nbest${nbest}_ml${decode_max_len}
     mkdir -p ${decode_dir}
     ${cuda_cmd} --gpu ${ngpu} ${decode_dir}/decode.log \
         recognize.py \
-        --recog-json ${feat_test_dir}/data.json \
+        --recog_json ${feat_test_dir}/data.json \
         --dict $dict \
-        --result-label ${decode_dir}/data.json \
-        --model-path ${expdir}/final.pth.tar \
-        --beam-size $beam_size \
+        --result_label ${decode_dir}/data.json \
+        --model_path ${expdir}/final.pth.tar \
+        --beam_size $beam_size \
         --nbest $nbest \
-        --decode-max-len $decode_max_len
+        --decode_max_len $decode_max_len
 
     # Compute CER
     local/score.sh --nlsyms ${nlsyms} ${decode_dir} ${dict}
