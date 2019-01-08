@@ -1,5 +1,5 @@
 # Listen, Attend and Spell
-A PyTorch implementation of Listen, Attend and Spell (LAS) [1], an end-to-end automatic speech recognition framework.
+A PyTorch implementation of Listen, Attend and Spell (LAS) [1], an end-to-end automatic speech recognition framework, which directly converts acoustic features to character sequence using only one nueral network.
 
 ## Install
 - Python3 (Recommend Anaconda)
